@@ -610,6 +610,18 @@ ExternalProject_Add(pthread-embedded
     ${UPDATE_DISCONNECTED_SUPPORT}
     )
 
+ExternalProject_Add(prx-packages
+    DEPENDS binutils_${target_suffix} gcc-base newlib vita-headers
+    GIT_REPOSITORY https://github.com/Princess-of-Sleeping/prx-packages
+    GIT_TAG "master"
+    # TODO: this project should have a proper makefile to support out-of-source builds
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND chmod +x <SOURCE_DIR>/build.sh && ${compiler_flags} ${wrapper_command} <SOURCE_DIR>/build.sh ${CMAKE_INSTALL_PREFIX}/${target_arch} ${CMAKE_INSTALL_PREFIX}
+    INSTALL_COMMAND ""
+    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_INSTALL_PREFIX}/${target_arch}/prx ${CMAKE_INSTALL_PREFIX}/prx
+    )
+
 ExternalProject_add(gcc-final
     DEPENDS gmp_${target_suffix} mpfr_${target_suffix} mpc_${target_suffix} isl_${target_suffix} libelf_${target_suffix}
     DEPENDS newlib ${GCC_DEPENDS} pthread-embedded
@@ -737,14 +749,14 @@ set(version_info_file ${CMAKE_INSTALL_PREFIX}/version_info.txt)
 add_custom_command(OUTPUT ${version_info_file}
     COMMAND ${CMAKE_COMMAND} -DINPUT_DIR=${CMAKE_BINARY_DIR} -DOUTPUT_FILE=${version_info_file}
     -P ${CMAKE_SOURCE_DIR}/cmake/create_version.cmake
-    DEPENDS vita-headers vita-toolchain_${target_suffix} newlib pthread-embedded samples
+    DEPENDS vita-headers vita-toolchain_${target_suffix} newlib pthread-embedded samples prx-packages
     COMMENT "Creating version_info.txt"
     )
 
 add_custom_command(OUTPUT "vitasdk-${host_native}-${build_date}.tar.bz2"
     COMMAND ${CMAKE_COMMAND} -E tar "cfvj" "vitasdk-${host_native}-${build_date}.tar.bz2" "${CMAKE_INSTALL_PREFIX}"
     DEPENDS vita-toolchain_${target_suffix} binutils_${target_suffix} gdb_${target_suffix} vita-headers newlib pthread-embedded samples vdpm vita-makepkg
-    DEPENDS gcc-final ${version_info_file}
+    DEPENDS gcc-final prx-packages ${version_info_file}
     COMMENT "Creating vitasdk-${host_os}-${build_date}.tar.bz2"
     )
 
